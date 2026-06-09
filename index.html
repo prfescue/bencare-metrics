@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BenCare Metrics & Performance Framework</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --accent: #E8442C;
+      --navy: #16213E;
+      --dark: #1A1A2E;
+      --green-bg: #F0FDF4; --green-text: #15803D;
+      --yellow-bg: #FEFCE8; --yellow-text: #854D0E;
+      --red-bg: #FEF2F2; --red-text: #B91C1C;
+      --border: #E5E7EB;
+      --sidebar-width: 220px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F8F9FA; color: #111827; display: flex; min-height: 100vh; }
+
+    .sidebar { width: var(--sidebar-width); background: var(--navy); color: white; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 100; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 24px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 4px; }
+    .sidebar-title { font-size: 13px; font-weight: 600; color: white; line-height: 1.4; }
+    .sidebar-nav { padding: 12px 0; flex: 1; }
+    .nav-section { padding: 8px 16px 2px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.35); margin-top: 8px; }
+    .nav-link { display: block; padding: 7px 16px; font-size: 13px; color: rgba(255,255,255,0.7); text-decoration: none; transition: all 0.15s; border-left: 3px solid transparent; }
+    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.08); border-left-color: var(--accent); }
+    .sidebar-footer { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.5; }
+
+    .main { margin-left: var(--sidebar-width); flex: 1; }
+    .page-header { background: white; border-bottom: 1px solid var(--border); padding: 28px 40px 22px; }
+    .header-eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
+    .page-header h1 { font-size: 26px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+    .header-meta { font-size: 13px; color: #6B7280; }
+    .header-meta a { color: var(--accent); text-decoration: none; }
+    .header-meta a:hover { text-decoration: underline; }
+
+    .content { padding: 28px 40px; max-width: 1080px; }
+    .section { margin-bottom: 48px; scroll-margin-top: 20px; }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+    .section-num { width: 26px; height: 26px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .section h2 { font-size: 19px; font-weight: 700; color: var(--dark); }
+    .section h3 { font-size: 14px; font-weight: 700; color: #374151; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .section p { font-size: 14px; color: #4B5563; line-height: 1.6; margin-bottom: 14px; }
+
+    .note { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 13px; color: #1E40AF; margin-bottom: 16px; line-height: 1.5; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .metric-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .metric-card.highlight { border-color: var(--accent); }
+    .mc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #9CA3AF; margin-bottom: 6px; }
+    .mc-value { font-size: 26px; font-weight: 700; color: var(--dark); margin-bottom: 3px; }
+    .mc-value.accent { color: var(--accent); }
+    .mc-sub { font-size: 12px; color: #6B7280; line-height: 1.4; }
+    .mc-tier { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .tier-tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+    .t1 { background: #EFF6FF; color: #1D4ED8; }
+    .t2 { background: #F5F3FF; color: #6D28D9; }
+
+    .channel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+    .channel-card { background: white; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .channel-head { padding: 12px 16px; font-size: 13px; font-weight: 700; color: white; }
+    .ch-phone { background: #2563EB; }
+    .ch-chat { background: #059669; }
+    .ch-email { background: #7C3AED; }
+    .channel-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px; }
+    .channel-row:last-child { border-bottom: none; }
+    .cr-label { color: #6B7280; }
+    .cr-value { font-weight: 600; color: #111827; }
+
+    .table-wrap { overflow-x: auto; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+    thead th { background: #F9FAFB; padding: 10px 14px; text-align: left; font-weight: 600; color: #374151; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody td { padding: 9px 14px; border-bottom: 1px solid #F3F4F6; color: #374151; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #FAFAFA; }
+    .target-row td { background: #F9FAFB !important; font-weight: 600; border-top: 2px solid var(--border); color: #111827; }
+
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .bg { background: var(--green-bg); color: var(--green-text); }
+    .by { background: var(--yellow-bg); color: var(--yellow-text); }
+    .br { background: var(--red-bg); color: var(--red-text); }
+    .bn { background: #F3F4F6; color: #9CA3AF; }
+    .bb { background: #EFF6FF; color: #1D4ED8; }
+
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+    .tool-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .tc-name { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+    .tc-desc { font-size: 12px; color: #6B7280; line-height: 1.5; margin-bottom: 12px; }
+    .tc-link { font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .tc-link:hover { text-decoration: underline; }
+
+    .pending-list { display: flex; flex-direction: column; gap: 8px; }
+    .pending-item { display: flex; align-items: flex-start; gap: 12px; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+    .pi-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .pi-title { font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 2px; }
+    .pi-desc { font-size: 12px; color: #6B7280; line-height: 1.5; }
+
+    .legend { font-size: 12px; color: #9CA3AF; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Benefits Support · Journey</div>
+    <div class="sidebar-title">BenCare Metrics &amp; Performance</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Overview</div>
+    <a href="#overview" class="nav-link">Team Structure</a>
+    <div class="nav-section">Service Levels</div>
+    <a href="#slos" class="nav-link">Channel SLOs</a>
+    <div class="nav-section">IC Performance</div>
+    <a href="#scorecard" class="nav-link">Core Pillar Metrics</a>
+    <a href="#coaching" class="nav-link">Coaching Metrics</a>
+    <a href="#supporting" class="nav-link">Supporting Metrics</a>
+    <div class="nav-section">Results</div>
+    <a href="#team-mom" class="nav-link">Team MoM</a>
+    <a href="#pe-mom" class="nav-link">By PE Team</a>
+    <div class="nav-section">Reference</div>
+    <a href="#tools" class="nav-link">Data Sources</a>
+    <a href="#pending" class="nav-link">Pending Items</a>
+  </div>
+  <div class="sidebar-footer">Last updated: June 2026<br>Patrick Currie · Head of Benefits Support</div>
+</nav>
+
+<main class="main">
+  <div class="page-header">
+    <div class="header-eyebrow">Benefits Care · Tier 1 &amp; Tier 2</div>
+    <h1>Metrics &amp; Performance Framework</h1>
+    <div class="header-meta">Benefits Support · Journey Line &nbsp;·&nbsp; Last updated June 2026 &nbsp;·&nbsp; <a href="https://docs.google.com/document/d/1sqMjBByu8tVfBrG7SUDsLcEqWSCyglqf7Bv8tTEtCvE/edit" target="_blank">Google Doc ↗</a></div>
+  </div>
+
+  <div class="content">
+
+    <!-- 1. OVERVIEW -->
+    <div class="section" id="overview">
+      <div class="section-header"><div class="section-num">1</div><h2>Overview &amp; Team Structure</h2></div>
+      <p>This is the reference framework for how BenCare Tier 1 and Tier 2 are measured — channel SLOs, IC performance scorecards, and supporting metrics. It defines what "good" looks like and tracks where the teams stand.</p>
+      <div class="note">As of June 1, 2026, all five PE leads carry both Tier 1 and Tier 2 ICs on their teams. Prior to June 1, Ellie led a specialized small team (2 BYB + 1 Cobra, email-focused). Historical data reflects pre-restructure compositions.</div>
+      <div class="metric-grid">
+        <div class="metric-card"><div class="mc-label">PE Leads</div><div class="mc-value">5</div><div class="mc-sub">Justin · Kevin · Jenny · Christen · Ellie</div></div>
+        <div class="metric-card"><div class="mc-label">Contact Channels</div><div class="mc-value">3</div><div class="mc-sub">Phone · Chat · Email</div></div>
+        <div class="metric-card"><div class="mc-label">Core Pillar Metrics</div><div class="mc-value">3</div><div class="mc-sub">Adherence · QA · tNPS</div></div>
+        <div class="metric-card"><div class="mc-label">Phone SLO</div><div class="mc-value">80/60</div><div class="mc-sub">80% answered within 60 seconds</div></div>
+      </div>
+    </div>
+
+    <!-- 2. SLOS -->
+    <div class="section" id="slos">
+      <div class="section-header"><div class="section-num">2</div><h2>Channel Service Level Objectives (SLOs)</h2></div>
+      <p>SLOs are team-level metrics monitored daily. They reflect how quickly and consistently the team responds across each channel. Individual ICs are not scored directly against SLOs — SLO performance reflects team-wide capacity and scheduling effectiveness.</p>
+      <div class="channel-grid">
+        <div class="channel-card">
+          <div class="channel-head ch-phone">📞 Phone</div>
+          <div class="channel-row"><span class="cr-label">SLO Target</span><span class="cr-value">80% ≤ 60 seconds</span></div>
+          <div class="channel-row"><span class="cr-label">AHT Target</span><span class="cr-value">≤ 14 minutes</span></div>
+          <div class="channel-row"><span class="cr-label">ASA</span><span class="cr-value">Monitored</span></div>
+        </div>
+        <div class="channel-card">
+          <div class="channel-head ch-chat">💬 Chat</div>
+          <div class="channel-row"><span class="cr-label">SLO Target</span><span class="cr-value">80% ≤ 30 seconds</span></div>
+          <div class="channel-row"><span class="cr-label">AHT Target</span><span class="cr-value">≤ 18 minutes</span></div>
+        </div>
+        <div class="channel-card">
+          <div class="channel-head ch-email">✉️ Email</div>
+          <div class="channel-row"><span class="cr-label">TFIR (1st Response)</span><span class="cr-value">80% &lt; 24 hours</span></div>
+          <div class="channel-row"><span class="cr-label">TRES (Resolution)</span><span class="cr-value">80% &lt; 144 hrs (BC/BAC)</span></div>
+          <div class="channel-row"><span class="cr-label">TFIR — BAC only</span><span class="cr-value">80% &lt; 48 hours</span></div>
+          <div class="channel-row"><span class="cr-label">AHT Target</span><span class="cr-value">≤ 23 minutes</span></div>
+          <div class="channel-row"><span class="cr-label">Inventory</span><span class="cr-value">Monitored weekly</span></div>
+        </div>
+      </div>
+      <p class="legend">Source: Weekly Engagement Dashboard (Tableau) · NICE CXOne</p>
+    </div>
+
+    <!-- 3. CORE SCORECARD -->
+    <div class="section" id="scorecard">
+      <div class="section-header"><div class="section-num">3</div><h2>IC Scorecard — Core Pillar Metrics</h2></div>
+      <p>These three metrics define whether an IC is meeting expectations. Tier 1 and Tier 2 share the same targets — with one exception: tNPS is lower for Tier 2 to reflect the nature of more complex, escalated interactions.</p>
+      <div class="metric-grid" style="grid-template-columns: repeat(3,1fr);">
+        <div class="metric-card"><div class="mc-label">Adherence</div><div class="mc-value">85%</div><div class="mc-sub">% of time available and working as scheduled</div><div class="mc-tier"><span class="tier-tag t1">T1: 85%</span><span class="tier-tag t2">T2: 85%</span></div></div>
+        <div class="metric-card"><div class="mc-label">QA Score</div><div class="mc-value">92%</div><div class="mc-sub">Quality evaluation via Level AI, conducted by PEs monthly</div><div class="mc-tier"><span class="tier-tag t1">T1: 92%</span><span class="tier-tag t2">T2: 92%</span></div></div>
+        <div class="metric-card highlight"><div class="mc-label">tNPS</div><div class="mc-value accent">45 / 25</div><div class="mc-sub">Transactional Net Promoter Score — only metric that differs by tier</div><div class="mc-tier"><span class="tier-tag t1">T1: 45</span><span class="tier-tag t2">T2: 25</span></div></div>
+      </div>
+    </div>
+
+    <!-- 4. COACHING METRICS -->
+    <div class="section" id="coaching">
+      <div class="section-header"><div class="section-num">4</div><h2>IC Scorecard — Coaching Metrics</h2></div>
+      <p>Coaching metrics are signals, not hard pass/fail thresholds. Sustained gaps trigger formal coaching plans. These apply equally across Tier 1 and Tier 2.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Target</th><th>Channel</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Phone AHT</strong></td><td><span class="badge bb">≤ 14 min</span></td><td>Phone</td><td>Average handle time: talk + hold + after-call work</td></tr>
+            <tr><td><strong>Chat AHT</strong></td><td><span class="badge bb">≤ 18 min</span></td><td>Chat</td><td>Average handle time per chat session</td></tr>
+            <tr><td><strong>Email AHT</strong></td><td><span class="badge bb">≤ 23 min</span></td><td>Email</td><td>Average handle time per email case</td></tr>
+            <tr><td><strong>Avg ACW</strong></td><td><span class="badge bb">≤ 60 sec</span></td><td>All</td><td>After-call wrap time following phone interactions</td></tr>
+            <tr><td><strong>Alert No Answers (Refused Calls)</strong></td><td><span class="badge bb">≤ 5</span></td><td>Phone</td><td>Calls offered to IC that were not accepted</td></tr>
+            <tr><td><strong>Level AI Instascore</strong></td><td><span class="badge bn">Monitored</span></td><td>All</td><td>Real-time AI-generated quality signal across all interactions</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="legend">Sources: PE Dashboard (Tableau) · NICE CXOne · Level AI</p>
+    </div>
+
+    <!-- 5. SUPPORTING METRICS -->
+    <div class="section" id="supporting">
+      <div class="section-header"><div class="section-num">5</div><h2>Supporting Metrics</h2></div>
+      <p>These metrics provide additional context. Some are active coaching signals; others are tracked but not yet formal targets.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Tool</th><th>Status</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ICSAT</strong></td><td>PE Dashboard / Level AI</td><td><span class="badge bn">Tracked · Not a target</span></td><td>Internal customer satisfaction score</td></tr>
+            <tr><td><strong>CES (Customer Effort Score)</strong></td><td>Level AI / tNPS Dashboard</td><td><span class="badge bn">Tracked · Not a target</span></td><td>Measures how easily a customer resolved their issue</td></tr>
+            <tr><td><strong>Sentiment Score</strong></td><td>Level AI</td><td><span class="badge bb">Monitored</span></td><td>AI-assessed sentiment across customer interactions</td></tr>
+            <tr><td><strong>Resolution Rate</strong></td><td>Level AI</td><td><span class="badge bb">Monitored</span></td><td>% of interactions resulting in full issue resolution</td></tr>
+            <tr><td><strong>Solves Per Hour (SPH)</strong></td><td>PE Dashboard</td><td><span class="badge bb">Coaching signal</span></td><td>Volume of cases resolved per hour, by channel</td></tr>
+            <tr><td><strong>VOC Themes</strong></td><td>Level AI</td><td><span class="badge bb">Reviewed monthly</span></td><td>Top topics, emerging trends, themes by volume from customer interactions</td></tr>
+            <tr><td><strong>Email Inventory Health</strong></td><td>Weekly Engagement Dashboard</td><td><span class="badge bb">Reviewed weekly</span></td><td>Open volume and aging breakdown by status (1 day through 61+ days)</td></tr>
+            <tr><td><strong>Omni Status / Agent Activity</strong></td><td>NICE CXOne</td><td><span class="badge bb">Real-time</span></td><td>Live agent availability, queue depth, log in/out times</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6. TEAM MOM -->
+    <div class="section" id="team-mom">
+      <div class="section-header"><div class="section-num">6</div><h2>Monthly Performance — Team Level</h2></div>
+      <p>Benefits Care combined results (Tier 1 + Tier 2). Color indicates performance relative to current target.</p>
+      <div class="note">SLO targets raised from 70% → 80% in March 2026. Channel SLO data from Tableau as of June 7, 2026 — covering Jan through Jun MTD for both Benefits Care and Benefits Advanced Care.</div>
+
+      <h3>AHT, Adherence &amp; tNPS</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Target</th><th>Feb '26</th><th>Mar '26</th><th>Apr '26</th><th>May '26</th><th>Jun '26</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Phone AHT</strong></td><td>≤ 14 min</td><td><span class="badge bg">12.31</span></td><td><span class="badge bg">12.14</span></td><td><span class="badge bg">12.29</span></td><td><span class="badge bn">—</span></td><td><span class="badge bn">—</span></td></tr>
+            <tr><td><strong>Chat AHT</strong></td><td>≤ 18 min</td><td><span class="badge bg">12.39</span></td><td><span class="badge bg">11.38</span></td><td><span class="badge bg">11.27</span></td><td><span class="badge bn">—</span></td><td><span class="badge bn">—</span></td></tr>
+            <tr><td><strong>Email AHT</strong></td><td>≤ 23 min</td><td><span class="badge br">35.02</span></td><td><span class="badge br">35.42</span></td><td><span class="badge br">26.23</span></td><td><span class="badge bn">—</span></td><td><span class="badge bn">—</span></td></tr>
+            <tr><td><strong>Adherence</strong></td><td>85%</td><td><span class="badge bg">88.2%</span></td><td><span class="badge bg">87.0%</span></td><td><span class="badge bg">90.0%</span></td><td><span class="badge bn">—</span></td><td><span class="badge bn">—</span></td></tr>
+            <tr><td><strong>tNPS</strong> <span class="tier-tag t1" style="font-size:10px;margin-left:4px;">T1: 45</span></td><td>45</td><td><span class="badge br">13</span></td><td><span class="badge br">22</span></td><td><span class="badge br">25.6</span></td><td><span class="badge bn">—</span></td><td><span class="badge bn">—</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Channel SLOs — Benefits Care</h3>
+      <div class="note">From Tableau as of June 7, 2026. Jun '26 = month-to-date. TRES threshold for BC/BAC is <strong>144 hours</strong> (confirmed in Tableau — differs from other CX pillars).</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Target</th><th>Jan '26</th><th>Feb '26</th><th>Mar '26</th><th>Apr '26</th><th>May '26</th><th>Jun '26 MTD</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Phone SLO</strong></td><td>80% ≤ 60s</td><td><span class="badge bg">80.9%</span></td><td><span class="badge bg">80.4%</span></td><td><span class="badge bg">81.7%</span></td><td><span class="badge bg">85.9%</span></td><td><span class="badge bg">94.5%</span></td><td><span class="badge bg">84.5%</span></td></tr>
+            <tr><td><strong>Chat SLO</strong></td><td>80% ≤ 30s</td><td><span class="badge br">77.5%</span></td><td><span class="badge bg">80.0%</span></td><td><span class="badge br">75.5%</span></td><td><span class="badge bg">86.2%</span></td><td><span class="badge bg">85.9%</span></td><td><span class="badge br">75.3%</span></td></tr>
+            <tr><td><strong>Email TFIR</strong></td><td>80% &lt; 24hrs</td><td><span class="badge bg">82.7%</span></td><td><span class="badge bg">83.0%</span></td><td><span class="badge bg">81.9%</span></td><td><span class="badge bg">81.5%</span></td><td><span class="badge bg">86.7%</span></td><td><span class="badge br">79.7%</span></td></tr>
+            <tr><td><strong>Email TRES</strong></td><td>80% &lt; 144hrs</td><td><span class="badge br">68.6%</span></td><td><span class="badge br">65.2%</span></td><td><span class="badge br">67.1%</span></td><td><span class="badge br">70.4%</span></td><td><span class="badge br">71.7%</span></td><td><span class="badge br">69.7%</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Channel SLOs — Benefits Advanced Care</h3>
+      <div class="note">BAC Phone SLO = "Care - Transfer to BAC" queue only (no callback volume). BAC TFIR threshold is 48 hours per Tableau dashboard annotation.</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Target</th><th>Jan '26</th><th>Feb '26</th><th>Mar '26</th><th>Apr '26</th><th>May '26</th><th>Jun '26 MTD</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Phone SLO</strong></td><td>80% ≤ 60s</td><td><span class="badge br">41.3%</span></td><td><span class="badge br">46.5%</span></td><td><span class="badge br">61.7%</span></td><td><span class="badge br">79.5%</span></td><td><span class="badge br">78.9%</span></td><td><span class="badge bg">83.3%</span></td></tr>
+            <tr><td><strong>Chat SLO</strong></td><td>80% ≤ 30s</td><td><span class="badge br">70.0%</span></td><td><span class="badge bg">84.5%</span></td><td><span class="badge bg">83.4%</span></td><td><span class="badge bg">86.5%</span></td><td><span class="badge bg">91.5%</span></td><td><span class="badge bg">81.8%</span></td></tr>
+            <tr><td><strong>Email TFIR</strong></td><td>80% &lt; 48hrs</td><td><span class="badge br">78.3%</span></td><td><span class="badge br">79.7%</span></td><td><span class="badge br">77.1%</span></td><td><span class="badge br">79.9%</span></td><td><span class="badge bg">82.9%</span></td><td><span class="badge bg">81.3%</span></td></tr>
+            <tr><td><strong>Email TRES</strong></td><td>80% &lt; 144hrs</td><td><span class="badge br">72.5%</span></td><td><span class="badge br">67.8%</span></td><td><span class="badge br">68.2%</span></td><td><span class="badge br">74.4%</span></td><td><span class="badge br">77.7%</span></td><td><span class="badge br">78.5%</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="legend">🟢 At or above target &nbsp; 🔴 Below target</p>
+    </div>
+
+    <!-- 7. PE MOM -->
+    <div class="section" id="pe-mom">
+      <div class="section-header"><div class="section-num">7</div><h2>Monthly Performance — By PE Team</h2></div>
+      <p>PE-level results for February through April 2026. Tier 1 and Tier 2 IC breakout available from June 2026 forward.</p>
+      <div class="note">Jenny's March data was not available in the source MPR deck. Ellie's team was specialized (email-only: BYB + Cobra) through May 2026 — phone and chat AHT are not applicable for that period.</div>
+
+      <h3>April 2026 — Snapshot</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>PE</th><th>Adherence</th><th>QA</th><th>tNPS</th><th>Email AHT</th><th>Phone AHT</th><th>Chat AHT</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Justin Givens</strong></td><td><span class="badge bg">90.4%</span></td><td><span class="badge bg">98.5%</span></td><td><span class="badge br">18.8</span></td><td><span class="badge br">28.33</span></td><td><span class="badge bg">12.86</span></td><td><span class="badge bg">10.34</span></td></tr>
+            <tr><td><strong>Kevin Keough</strong></td><td><span class="badge bg">86.7%</span></td><td><span class="badge bg">96.2%</span></td><td><span class="badge br">20.7</span></td><td><span class="badge br">25.70</span></td><td><span class="badge bg">12.30</span></td><td><span class="badge bg">12.20</span></td></tr>
+            <tr><td><strong>Jenny Kirou</strong></td><td><span class="badge bg">89.7%</span></td><td><span class="badge bg">96.6%</span></td><td><span class="badge by">37.9</span></td><td><span class="badge bg">15.16</span></td><td><span class="badge bg">12.30</span></td><td><span class="badge bg">12.64</span></td></tr>
+            <tr><td><strong>Christen Caruthers</strong></td><td><span class="badge bg">91.6%</span></td><td><span class="badge bg">96.3%</span></td><td><span class="badge br">17.2</span></td><td><span class="badge br">24.13</span></td><td><span class="badge bg">10.78</span></td><td><span class="badge bg">10.55</span></td></tr>
+            <tr><td><strong>Ellie O'Brien *</strong></td><td><span class="badge bg">94.8%</span></td><td><span class="badge bg">98.8%</span></td><td><span class="badge by">42.9</span></td><td><span class="badge bg">19.93</span></td><td><span class="badge bn">—</span></td><td><span class="badge bn">—</span></td></tr>
+            <tr class="target-row"><td><strong>Target</strong></td><td>85%</td><td>92%</td><td>45 (T1) / 25 (T2)</td><td>≤ 23 min</td><td>≤ 14 min</td><td>≤ 18 min</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="legend">* Ellie's team was email-only through May 2026. &nbsp; 🟡 tNPS within 10 pts of T1 target (30–44)</p>
+
+      <h3>Month-over-Month by PE</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>PE</th><th>Metric</th><th>Feb '26</th><th>Mar '26</th><th>Apr '26</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="6"><strong>Justin Givens</strong></td><td>Adherence</td><td><span class="badge bg">86.0%</span></td><td><span class="badge bg">87.6%</span></td><td><span class="badge bg">90.4%</span></td></tr>
+            <tr><td>QA</td><td><span class="badge bg">94.5%</span></td><td><span class="badge bg">94.4%</span></td><td><span class="badge bg">98.5%</span></td></tr>
+            <tr><td>tNPS</td><td><span class="badge br">-5.3</span></td><td><span class="badge br">-7.7</span></td><td><span class="badge br">18.8</span></td></tr>
+            <tr><td>Email AHT</td><td><span class="badge br">41.70</span></td><td><span class="badge br">38.70</span></td><td><span class="badge br">28.33</span></td></tr>
+            <tr><td>Phone AHT</td><td><span class="badge bg">13.35</span></td><td><span class="badge bg">12.75</span></td><td><span class="badge bg">12.86</span></td></tr>
+            <tr><td>Chat AHT</td><td><span class="badge bg">13.17</span></td><td><span class="badge bg">11.48</span></td><td><span class="badge bg">10.34</span></td></tr>
+
+            <tr><td rowspan="6"><strong>Kevin Keough</strong></td><td>Adherence</td><td><span class="badge bg">86.2%</span></td><td><span class="badge br">79.2%</span></td><td><span class="badge bg">86.7%</span></td></tr>
+            <tr><td>QA</td><td><span class="badge bg">94.5%</span></td><td><span class="badge bg">96.5%</span></td><td><span class="badge bg">96.2%</span></td></tr>
+            <tr><td>tNPS</td><td><span class="badge br">1.6</span></td><td><span class="badge br">-9.3</span></td><td><span class="badge br">20.7</span></td></tr>
+            <tr><td>Email AHT</td><td><span class="badge br">47.75</span></td><td><span class="badge br">45.80</span></td><td><span class="badge br">25.70</span></td></tr>
+            <tr><td>Phone AHT</td><td><span class="badge bg">10.45</span></td><td><span class="badge bg">12.59</span></td><td><span class="badge bg">12.30</span></td></tr>
+            <tr><td>Chat AHT</td><td><span class="badge bg">11.61</span></td><td><span class="badge bg">12.04</span></td><td><span class="badge bg">12.20</span></td></tr>
+
+            <tr><td rowspan="6"><strong>Jenny Kirou</strong></td><td>Adherence</td><td><span class="badge bg">88.0%</span></td><td><span class="badge bn">—</span></td><td><span class="badge bg">89.7%</span></td></tr>
+            <tr><td>QA</td><td><span class="badge bg">92.8%</span></td><td><span class="badge bn">—</span></td><td><span class="badge bg">96.6%</span></td></tr>
+            <tr><td>tNPS</td><td><span class="badge br">5.9</span></td><td><span class="badge bn">—</span></td><td><span class="badge by">37.9</span></td></tr>
+            <tr><td>Email AHT</td><td><span class="badge br">23.47</span></td><td><span class="badge bn">—</span></td><td><span class="badge bg">15.16</span></td></tr>
+            <tr><td>Phone AHT</td><td><span class="badge bg">11.98</span></td><td><span class="badge bn">—</span></td><td><span class="badge bg">12.30</span></td></tr>
+            <tr><td>Chat AHT</td><td><span class="badge bg">12.85</span></td><td><span class="badge bn">—</span></td><td><span class="badge bg">12.64</span></td></tr>
+
+            <tr><td rowspan="6"><strong>Christen Caruthers</strong></td><td>Adherence</td><td><span class="badge bg">89.2%</span></td><td><span class="badge bg">91.6%</span></td><td><span class="badge bg">91.6%</span></td></tr>
+            <tr><td>QA</td><td><span class="badge bg">96.3%</span></td><td><span class="badge br">87.9%</span></td><td><span class="badge bg">96.3%</span></td></tr>
+            <tr><td>tNPS</td><td><span class="badge br">5.9</span></td><td><span class="badge by">33.3</span></td><td><span class="badge br">17.2</span></td></tr>
+            <tr><td>Email AHT</td><td><span class="badge br">29.32</span></td><td><span class="badge br">24.72</span></td><td><span class="badge br">24.13</span></td></tr>
+            <tr><td>Phone AHT</td><td><span class="badge bg">9.45</span></td><td><span class="badge bg">9.55</span></td><td><span class="badge bg">10.78</span></td></tr>
+            <tr><td>Chat AHT</td><td><span class="badge bg">11.83</span></td><td><span class="badge bg">9.43</span></td><td><span class="badge bg">10.55</span></td></tr>
+
+            <tr><td rowspan="4"><strong>Ellie O'Brien *</strong></td><td>Adherence</td><td><span class="badge bg">93.1%</span></td><td><span class="badge bg">94.5%</span></td><td><span class="badge bg">94.8%</span></td></tr>
+            <tr><td>QA</td><td><span class="badge br">81.9%</span></td><td><span class="badge bg">96.9%</span></td><td><span class="badge bg">98.8%</span></td></tr>
+            <tr><td>tNPS</td><td><span class="badge br">15.4</span></td><td><span class="badge bg">66.7</span></td><td><span class="badge by">42.9</span></td></tr>
+            <tr><td>Email AHT</td><td><span class="badge bg">11.02</span></td><td><span class="badge bg">20.45</span></td><td><span class="badge bg">19.93</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="legend">🟢 At or above target &nbsp; 🟡 tNPS within 10 pts of T1 target &nbsp; 🔴 Below target &nbsp; — Not available</p>
+    </div>
+
+    <!-- 8. TOOLS -->
+    <div class="section" id="tools">
+      <div class="section-header"><div class="section-num">8</div><h2>Data Sources &amp; Tools</h2></div>
+      <h3>Performance &amp; Quality</h3>
+      <div class="tool-grid">
+        <div class="tool-card"><div class="tc-name">PE Dashboard (Tableau)</div><div class="tc-desc">IC and PE-level scorecard: Adherence, QA, tNPS, AHT. Additional tab: refused calls, ICSAT, CES.</div><a href="https://us-west-2b.online.tableau.com/#/site/gusto/views/CustomerCarePEScorecard_WIP_17418571793490/PESummary" class="tc-link" target="_blank">Open PE Scorecard ↗</a></div>
+        <div class="tool-card"><div class="tc-name">Weekly Engagement Dashboard (Tableau)</div><div class="tc-desc">Phone, Chat, Email SLOs; TFIR, TRES, Interaction ASA, volume trends. Primary SLO monitoring tool.</div><a href="https://us-west-2b.online.tableau.com/#/site/gusto/views/WeeklyEngagementDash/ChatInteractions" class="tc-link" target="_blank">Open Weekly Engagement ↗</a></div>
+        <div class="tool-card"><div class="tc-name">tNPS / CSAT Dashboard (Tableau)</div><div class="tc-desc">tNPS by pillar and channel, CSAT breakdowns, CES raw data. Used for VOC and experience trend analysis.</div><a href="https://us-west-2b.online.tableau.com/#/site/gusto/views/New_CustomerCareMetricsDashboard/tNPSOverviewDashboard" class="tc-link" target="_blank">Open tNPS Overview ↗</a></div>
+        <div class="tool-card"><div class="tc-name">Level AI</div><div class="tc-desc">QA evaluations, VOC themes, sentiment, resolution rate, ICSAT, CES. All transcripts and recordings. PEs complete QA here.</div><a href="https://gusto.thelevel.ai/organizations/1/voc/home" class="tc-link" target="_blank">Open Level AI ↗</a></div>
+        <div class="tool-card"><div class="tc-name">NICE CXOne</div><div class="tc-desc">Live phone queues, agent status, adherence, log in/out times. Powers the phone channel. Dashboard: "Benefits Services (Emma M.)"</div><a href="https://na1.nice-incontact.com/mydashboard/#/myDashboards" class="tc-link" target="_blank">Open NICE CXOne ↗</a></div>
+      </div>
+      <h3>Volume &amp; Analysis</h3>
+      <div class="tool-grid">
+        <div class="tool-card"><div class="tc-name">Case Reason Analysis (Tableau)</div><div class="tc-desc">Case reasons by volume and handle times, reviewable by day, week, month, or year. Used to identify top drivers of contact volume.</div><a href="https://us-west-2b.online.tableau.com/#/site/gusto/views/EngagementDashboard/CaseReasonAnalysis" class="tc-link" target="_blank">Open Case Reason Analysis ↗</a></div>
+        <div class="tool-card"><div class="tc-name">Volume by Channel (Tableau)</div><div class="tc-desc">Channel mix distribution across phone, chat, and email. Used to track volume trends and channel shift over time.</div><a href="https://us-west-2b.online.tableau.com/#/site/gusto/views/CustomerCareInteractionChannelMix/ChannelMixDistribition" class="tc-link" target="_blank">Open Channel Mix ↗</a></div>
+      </div>
+      <h3>Voice AI</h3>
+      <div class="tool-grid">
+        <div class="tool-card"><div class="tc-name">Doppler Voice AI Dashboard</div><div class="tc-desc">Monitors Doppler — a voice FAQ tool customers can use while waiting or instead of speaking with an IC. Tracks self-service deflection and performance.</div><a href="https://app.snowflake.com/gusto/warehouse/#/streamlit-apps/DEV_VIGNESHMAHENDRAN.DATA_SCIENCE.DOPPLER_VOICE_AI_DASHBOARD" class="tc-link" target="_blank">Open Doppler Dashboard ↗</a></div>
+      </div>
+      <h3>WFM &amp; Staffing</h3>
+      <div class="tool-grid">
+        <div class="tool-card"><div class="tc-name">Daily SLO Dashboard</div><div class="tc-desc">Reviewed with the WFM team daily. Shows SLO performance by pillar — key input for the 11:30 AM standup and intraday monitoring.</div><a href="https://cx-journey-dashboard.poc.staging.zp-int.com/cross-journey/daily?date=2026-05-26" class="tc-link" target="_blank">Open Daily SLO Dashboard ↗</a></div>
+        <div class="tool-card"><div class="tc-name">CXSPI WFM Planning Site</div><div class="tc-desc">WFM planning resource. Central reference for workforce planning processes, schedules, and capacity information.</div><a href="https://sites.google.com/gusto.com/cxpi-wfm" class="tc-link" target="_blank">Open WFM Site ↗</a></div>
+        <div class="tool-card"><div class="tc-name">MoM Staffing Requirements</div><div class="tc-desc">Month-over-month staffing requirements for the Journey line. Used for headcount planning and capacity forecasting.</div><a href="https://share-some-html.staging.zp-int.com/fy27-journey-staffing-mom" class="tc-link" target="_blank">Open Staffing Requirements ↗</a></div>
+      </div>
+      <h3>Operating Cadence</h3>
+      <div class="tool-grid">
+        <div class="tool-card"><div class="tc-name">Monthly Performance Review Deck</div><div class="tc-desc">PE-led monthly review: MoM metric comparisons by team, IC coaching status, trend analysis, and action plans.</div><a href="https://docs.google.com/presentation/d/1prTzxlDGSYV08tvQ0Yj-DgAmlyIWv29Vx76y9eockQs" class="tc-link" target="_blank">Open MPR Deck ↗</a></div>
+      </div>
+    </div>
+
+    <!-- 9. PENDING -->
+    <div class="section" id="pending">
+      <div class="section-header"><div class="section-num">9</div><h2>Pending Data &amp; Open Items</h2></div>
+      <p>The following will be added as data becomes available.</p>
+      <div class="pending-list">
+        <div class="pending-item"><div class="pi-icon">📅</div><div><div class="pi-title">May, June &amp; July 2026 Actuals</div><div class="pi-desc">Team-level and PE-level MoM results in progress. Will complete the rolling performance view.</div></div></div>
+        <div class="pending-item"><div class="pi-icon">📊</div><div><div class="pi-title">Tier 1 vs. Tier 2 IC Breakout</div><div class="pi-desc">Available June 2026 forward, now that all PE teams carry both T1 and T2 ICs. Enables separate tNPS tracking against the 45 and 25 targets.</div></div></div>
+        <div class="pending-item"><div class="pi-icon">📝</div><div><div class="pi-title">Ellie's Team Historical Context</div><div class="pi-desc">Full team composition pre-June 2026 (BYB and Cobra specialization) to be documented for accurate MoM comparison.</div></div></div>
+        <div class="pending-item"><div class="pi-icon">🔢</div><div><div class="pi-title">QA Rolled-Up Team Level</div><div class="pi-desc">QA currently tracked per PE. A Benefits Care-wide QA rollup figure to be confirmed and added to the team-level MoM table.</div></div></div>
+        <div class="pending-item"><div class="pi-icon">🎯</div><div><div class="pi-title">Tier 2 tNPS Baseline</div><div class="pi-desc">Initial T2 performance data against the 25-point target. Baseline collection begins June 2026 with the new mixed-tier structure.</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.25 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
